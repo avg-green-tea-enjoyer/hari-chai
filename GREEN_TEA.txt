@@ -1,0 +1,570 @@
+/****************BANKERS****************/
+
+// C++ program to illustrate Banker's Algorithm
+#include <iostream>
+using namespace std;
+
+// Number of processes
+const int P = 5;
+
+// Number of resources
+const int R = 3;
+
+// Function to find the need of each process
+void calculateNeed(int need[P][R], int maxm[P][R],
+                   int allot[P][R])
+{
+    // Calculating Need of each P
+    for (int i = 0; i < P; i++)
+        for (int j = 0; j < R; j++)
+
+            // Need of instance = maxm instance -
+            //                    allocated instance
+            need[i][j] = maxm[i][j] - allot[i][j];
+}
+
+// Function to find the system is in safe state or not
+bool isSafe(int processes[], int avail[], int maxm[][R],
+            int allot[][R])
+{
+    int need[P][R];
+
+    // Function to calculate need matrix
+    calculateNeed(need, maxm, allot);
+
+    // Mark all processes as infinish
+    bool finish[P] = {0};
+
+    // To store safe sequence
+    int safeSeq[P];
+
+    // Make a copy of available resources
+    int work[R];
+    for (int i = 0; i < R; i++)
+        work[i] = avail[i];
+
+    // While all processes are not finished
+    // or system is not in safe state.
+    int count = 0;
+    while (count < P)
+    {
+        // Find a process which is not finish and
+        // whose needs can be satisfied with current
+        // work[] resources.
+        bool found = false;
+        for (int p = 0; p < P; p++)
+        {
+            // First check if a process is finished,
+            // if no, go for next condition
+            if (finish[p] == 0)
+            {
+                // Check if for all resources of
+                // current P need is less
+                // than work
+                int j;
+                for (j = 0; j < R; j++)
+                    if (need[p][j] > work[j])
+                        break;
+
+                // If all needs of p were satisfied.
+                if (j == R)
+                {
+                    // Add the allocated resources of
+                    // current P to the available/work
+                    // resources i.e.free the resources
+                    for (int k = 0; k < R; k++)
+                        work[k] += allot[p][k];
+
+                    // Add this process to safe sequence.
+                    safeSeq[count++] = p;
+
+                    // Mark this p as finished
+                    finish[p] = 1;
+
+                    found = true;
+                }
+            }
+        }
+
+        // If we could not find a next process in safe
+        // sequence.
+        if (found == false)
+        {
+            cout << "System is not in safe state";
+            return false;
+        }
+    }
+
+    // If system is in safe state then
+    // safe sequence will be as below
+    cout << "System is in safe state.\nSafe"
+            " sequence is: ";
+    for (int i = 0; i < P; i++)
+        cout << safeSeq[i] << " ";
+
+    return true;
+}
+
+// Driver code
+int main()
+{
+    int processes[] = {0, 1, 2, 3, 4};
+
+    // Available instances of resources
+    int avail[] = {3, 3, 2};
+
+    // Maximum R that can be allocated
+    // to processes
+    int maxm[][R] = {{7, 5, 3},
+                     {3, 2, 2},
+                     {9, 0, 2},
+                     {2, 2, 2},
+                     {4, 3, 3}};
+
+    // Resources allocated to processes
+    int allot[][R] = {{0, 1, 0},
+                      {2, 0, 0},
+                      {3, 0, 2},
+                      {2, 1, 1},
+                      {0, 0, 2}};
+
+    // Check system is in safe state or not
+    isSafe(processes, avail, maxm, allot);
+
+    return 0;
+}
+
+/*************** FCSF ******************/
+
+#include<iostream>
+using namespace std;
+
+void findWaitingTime(int processes[], int n, int bt[], int wt[], int at[])
+{
+    int service_time[n];
+    service_time[0] = at[0];
+    wt[0] = 0;
+
+    for(int i = 1; i < n; i++)
+    {
+        service_time[i] = service_time[i-1] + bt[i-1];
+
+        wt[i] = service_time[i] - at[i];
+
+        if(wt[i]<0){
+            wt[i] = 0;
+        }
+    }
+}
+
+void findTurnAroundTime(int processes[], int n, int bt[], int wt[], int tat[])
+{
+    for(int i = 0; i < n; i++){
+        tat[i] = bt[i] + wt[i];
+    }
+}
+
+void findavgTime(int processes[], int n, int bt[], int at[])
+{
+    int wt[n], tat[n];
+
+    findWaitingTime(processes, n, bt, wt, at);
+    
+    findTurnAroundTime(processes, n, bt, wt, tat);
+
+    cout<< " Processes "<< " Burst Time " << "Arrival Time " << " Waiting Time " << " Turn-Around Time " << " Completion Time \n";
+    int total_wt = 0, total_tat = 0;
+    for(int i = 0; i < n; i++)
+    {
+        total_wt = total_wt +wt[i];
+        total_tat = total_tat + tat[i];
+        int compl_time = tat[i] + at[i];
+        cout<< " " << i+1 << "\t\t" << bt[i] << "\t\t" << at[i] << "\t" << wt[i] << "\t\t " << tat[i] << "\t\t " << compl_time << endl;
+    }
+
+    cout<< "Average waiting time = " << (float)total_wt / (float)n;
+    cout<< "\nAverage turn around time = " << (float)total_tat / (float)n;
+}
+
+
+int main(){
+    int processes[] = {1,2,3};
+    int n = sizeof processes / sizeof processes[0];
+
+    int burst_time[] = {10, 5, 8};
+
+    int arrival_time[] = {0, 0, 0};
+
+    findavgTime(processes, n, burst_time, arrival_time);
+    
+    return 0;
+}
+
+
+
+/*************  SJF   ************/
+
+#include <bits/stdc++.h>
+using namespace std;
+//structure for every process
+struct Process {
+   int pid; // Process ID
+   int bt; // Burst Time
+   int art; // Arrival Time
+};
+void findTurnAroundTime(Process proc[], int n, int wt[], int tat[]) {
+   for (int i = 0; i < n; i++)
+   tat[i] = proc[i].bt + wt[i];
+}
+//waiting time of all process
+void findWaitingTime(Process proc[], int n, int wt[]) {
+   int rt[n];
+   for (int i = 0; i < n; i++)
+   rt[i] = proc[i].bt;
+   int complete = 0, t = 0, minm = INT_MAX;
+   int shortest = 0, finish_time;
+   bool check = false;
+   while (complete != n) {
+      for (int j = 0; j < n; j++) {
+         if ((proc[j].art <= t) && (rt[j] < minm) && rt[j] > 0) {
+            minm = rt[j];
+            shortest = j;
+            check = true;
+         }
+      }
+      if (check == false) {
+         t++;
+         continue;
+      }
+      // decrementing the remaining time
+      rt[shortest]--;
+      minm = rt[shortest];
+      if (minm == 0)
+         minm = INT_MAX;
+         // If a process gets completely
+         // executed
+         if (rt[shortest] == 0) {
+            complete++;
+            check = false;
+            finish_time = t + 1;
+            // Calculate waiting time
+            wt[shortest] = finish_time -
+            proc[shortest].bt -
+            proc[shortest].art;
+            if (wt[shortest] < 0)
+               wt[shortest] = 0;
+         }
+         // Increment time
+         t++;
+   }
+}
+// Function to calculate average time
+void findavgTime(Process proc[], int n) {
+   int wt[n], tat[n], total_wt = 0,
+   total_tat = 0;
+   // Function to find waiting time of all
+   // processes
+   findWaitingTime(proc, n, wt);
+   // Function to find turn around time for
+   // all processes
+   findTurnAroundTime(proc, n, wt, tat);
+   cout << "Processes " << " Burst time " << " Waiting time " << " Turn around time\n";
+   for (int i = 0; i < n; i++) {
+      total_wt = total_wt + wt[i];
+      total_tat = total_tat + tat[i];
+      cout << " " << proc[i].pid << "\t\t" << proc[i].bt << "\t\t " << wt[i] << "\t\t " << tat[i] << endl;
+   }
+   cout << "\nAverage waiting time = " << (float)total_wt / (float)n; cout << "\nAverage turn around time = " << (float)total_tat / (float)n;
+}
+// main function
+int main() {
+   Process proc[] = { { 1, 5, 1 }, { 2, 3, 1 }, { 3, 6, 2 }, { 4, 5, 3 } };
+   int n = sizeof(proc) / sizeof(proc[0]);
+   findavgTime(proc, n);
+   return 0;
+}
+
+/***************  BEST FIT  ***************/
+
+// C++ implementation of Best - Fit algorithm
+#include<bits/stdc++.h>
+using namespace std;
+  
+// Function to allocate memory to blocks as per Best fit
+// algorithm
+void bestFit(int blockSize[], int m, int processSize[], int n)
+{
+    // Stores block id of the block allocated to a
+    // process
+    int allocation[n];
+  
+    // Initially no block is assigned to any process
+    memset(allocation, -1, sizeof(allocation));
+  
+    // pick each process and find suitable blocks
+    // according to its size ad assign to it
+    for (int i=0; i<n; i++)
+    {
+        // Find the best fit block for current process
+        int bestIdx = -1;
+        for (int j=0; j<m; j++)
+        {
+            if (blockSize[j] >= processSize[i])
+            {
+                if (bestIdx == -1)
+                    bestIdx = j;
+                else if (blockSize[bestIdx] > blockSize[j])
+                    bestIdx = j;
+            }
+        }
+  
+        // If we could find a block for current process
+        if (bestIdx != -1)
+        {
+            // allocate block j to p[i] process
+            allocation[i] = bestIdx;
+  
+            // Reduce available memory in this block.
+            blockSize[bestIdx] -= processSize[i];
+        }
+    }
+  
+    cout << "\nProcess No.\tProcess Size\tBlock no.\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << "   " << i+1 << "\t\t" << processSize[i] << "\t\t";
+        if (allocation[i] != -1)
+            cout << allocation[i] + 1;
+        else
+            cout << "Not Allocated";
+        cout << endl;
+    }
+}
+  
+// Driver code
+int main()
+{
+    int blockSize[] = {100, 500, 200, 300, 600};
+    int processSize[] = {212, 417, 112, 426};
+    int m = sizeof(blockSize)/sizeof(blockSize[0]);
+    int n = sizeof(processSize)/sizeof(processSize[0]);
+  
+    bestFit(blockSize, m, processSize, n);
+  
+    return 0 ;
+}
+
+
+/****************** WORST FIT ************/
+
+// C++ implementation of worst - Fit algorithm
+#include<bits/stdc++.h>
+using namespace std;
+
+// Function to allocate memory to blocks as per worst fit
+// algorithm
+void worstFit(int blockSize[], int m, int processSize[],
+												int n)
+{
+	// Stores block id of the block allocated to a
+	// process
+	int allocation[n];
+
+	// Initially no block is assigned to any process
+	memset(allocation, -1, sizeof(allocation));
+
+	// pick each process and find suitable blocks
+	// according to its size ad assign to it
+	for (int i=0; i<n; i++)
+	{
+		// Find the best fit block for current process
+		int wstIdx = -1;
+		for (int j=0; j<m; j++)
+		{
+			if (blockSize[j] >= processSize[i])
+			{
+				if (wstIdx == -1)
+					wstIdx = j;
+				else if (blockSize[wstIdx] < blockSize[j])
+					wstIdx = j;
+			}
+		}
+
+		// If we could find a block for current process
+		if (wstIdx != -1)
+		{
+			// allocate block j to p[i] process
+			allocation[i] = wstIdx;
+
+			// Reduce available memory in this block.
+			blockSize[wstIdx] -= processSize[i];
+		}
+	}
+
+	cout << "\nProcess No.\tProcess Size\tBlock no.\n";
+	for (int i = 0; i < n; i++)
+	{
+		cout << " " << i+1 << "\t\t" << processSize[i] << "\t\t";
+		if (allocation[i] != -1)
+			cout << allocation[i] + 1;
+		else
+			cout << "Not Allocated";
+		cout << endl;
+	}
+}
+
+// Driver code
+int main()
+{
+	int blockSize[] = {100, 500, 200, 300, 600};
+	int processSize[] = {212, 417, 112, 426};
+	int m = sizeof(blockSize)/sizeof(blockSize[0]);
+	int n = sizeof(processSize)/sizeof(processSize[0]);
+
+	worstFit(blockSize, m, processSize, n);
+
+	return 0 ;
+}
+
+/************* FIRST FIT ****************/
+
+#include <stdio.h>
+#include <conio.h>
+#define max 25
+int main()
+{
+    int frag[max], b[max], f[max], i, j, nb, nf, temp;
+    static int bf[max], ff[max];
+
+    printf("\n\tMemory Management Scheme - First Fit");
+    printf("\nEnter the number of blocks:");
+    scanf("%d", &nb);
+    printf("Enter the number of files:");
+    scanf("%d", &nf);
+    printf("\nEnter the size of the blocks:-\n");
+    for (i = 1; i <= nb; i++)
+    {
+        printf("Block %d:", i);
+        scanf("%d", &b[i]);
+    }
+    printf("Enter the size of the files :-\n");
+    for (i = 1; i <= nf; i++)
+    {
+        printf("File %d:", i);
+        scanf("%d", &f[i]);
+    }
+    for (i = 1; i <= nf; i++)
+    {
+        for (j = 1; j <= nb; j++)
+        {
+            if (bf[j] != 1)
+            {
+                temp = b[j] - f[i];
+                if (temp >= 0)
+                {
+                    ff[i] = j;
+                    break;
+                }
+            }
+        }
+        frag[i] = temp;
+        bf[ff[i]] = 1;
+    }
+    printf("\nFile_no:\tFile_size :\tBlock_no:\tBlock_size:\tFragement");
+    for (i = 1; i <= nf; i++)
+        printf("\n%d\t\t%d\t\t%d\t\t%d\t\t%d", i, f[i], ff[i], b[ff[i]], frag[i]);
+    getch();
+}
+
+// INPUT
+// Enter the number of blocks: 3
+// Enter the number of files: 2
+
+// Enter the size of the blocks:-
+// Block 1: 5
+// Block 2: 2
+// Block 3: 7
+
+// Enter the size of the files:-
+// File 1: 1
+// File 2: 4
+
+/******** PAGING *******/
+
+#include<stdio.h>
+#include<conio.h>
+main()
+{
+ int ms, ps, nop, np, rempages, i, j, x, y, pa, offset;
+ int s[10], fno[10][20];
+
+
+
+printf("\nEnter the memory size -- ");
+scanf("%d",&ms);
+
+printf("\nEnter the page size -- ");
+scanf("%d",&ps);
+
+nop = ms/ps;
+printf("\nThe no. of pages available in memory are -- %d ",nop);
+
+printf("\nEnter number of processes -- ");
+ scanf("%d",&np);
+rempages = nop;
+for(i=1;i<=np;i++)
+
+{
+
+printf("\nEnter no. of pages required for p[%d]-- ",i);
+ scanf("%d",&s[i]);
+
+if(s[i] >rempages)
+{
+
+printf("\nMemory is Full");
+break;
+}
+rempages = rempages - s[i];
+
+printf("\nEnter pagetable for p[%d] --- ",i);
+ for(j=0;j<s[i];j++)
+scanf("%d",&fno[i][j]);
+}
+
+printf("\nEnter Logical Address to find Physical Address ");
+printf("\nEnter process no. and pagenumber and offset -- ");
+
+scanf("%d %d %d",&x,&y, &offset);
+
+
+
+if(x>np || y>=s[i] || offset>=ps)
+printf("\nInvalid Process or Page Number or offset");
+
+else
+{ pa=fno[x][y]*ps+offset;
+printf("\nThe Physical Address is -- %d",pa);
+
+}
+getch();
+}
+
+// INPUT
+// Enter the memory size – 1000 Enter the page size -- 100
+// The no. of pages available in memory are -- 10
+// Enter number of processes -- 3
+// Enter no. of pages required for p[1]-- 4
+// Enter pagetable for p[1] --- 8 6
+// 9
+// 5
+// Enter no. of pages required for p[2]-- 5
+// Enter pagetable for p[2] --- 1 4 5 7 3
+// Enter no. of pages required for p[3]-- 5
+
+// OUTPUT
+// Memory is Full
+// Enter Logical Address to find Physical Address Enter process no. and pagenumber and offset  -- 2
+// 3
+// 60
+// The Physical Address is --  760
